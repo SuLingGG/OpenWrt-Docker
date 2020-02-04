@@ -1,0 +1,9 @@
+# Put your custom commands here that should be executed once
+# the system init finished. By default this file does nothing.
+
+# Fix Luci Don't Remove!!
+umount /etc/resolv.conf
+rm /etc/resolv.conf
+ln -s /tmp/resolv.conf.auto /etc/resolv.conf
+
+exit 0
