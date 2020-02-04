@@ -6,16 +6,18 @@ config interface 'loopback'
 	option netmask '255.0.0.0'
 
 config globals 'globals'
-	option ula_prefix 'fd32:0344:e875::/48'
 
 config interface 'lan'
 	option type 'bridge'
 	option ifname 'eth0'
 	option proto 'static'
-	option ipaddr '192.168.123.100'
 	option netmask '255.255.255.0'
 	option ip6assign '60'
+	option ipaddr '192.168.123.100'
 	option gateway '192.168.123.1'
-	list dns '192.168.123.1'
-	option broadcast '192.168.123.255'
+	option dns '192.168.123.1'
+
+config interface 'vpn0'
+	option ifname 'tun0'
+	option proto 'none'
 
