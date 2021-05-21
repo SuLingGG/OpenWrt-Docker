@@ -53,9 +53,9 @@ jobs:
 
     - name: Load Custom Configuration 
       run: |
-        sed -i "s/subtarget/$SUBTARGET/g" data/etc/opkg/distfeeds.conf
-        sed -i "s/target\//$TARGET\//g" data/etc/opkg/distfeeds.conf
-        sed -i "s/platform/$PLATFORM/g" data/etc/opkg/distfeeds.conf
+        sed -i "s/subtarget/$SUBTARGET/g" files/etc/opkg/distfeeds.conf
+        sed -i "s/target\//$TARGET\//g" files/etc/opkg/distfeeds.conf
+        sed -i "s/platform/$PLATFORM/g" files/etc/opkg/distfeeds.conf
         chmod +x scripts/*
         ./scripts/preset-clash-core.sh
         ./scripts/preset-terminal-tools.sh
@@ -68,7 +68,7 @@ jobs:
 
     - name: Build RootFS
       run: |
-        export packages=$(cat ./data/config/x86_64-packages.config)
+        export packages=$(cat ./config/x86_64-packages.config)
         cd openwrt-imagebuilder-$TARGET-$SUBTARGET.Linux-x86_64
         make image PACKAGES="$packages"
         cp bin/targets/$TARGET/$SUBTARGET/*rootfs.tar.gz ..
