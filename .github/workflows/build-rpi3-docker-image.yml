@@ -49,10 +49,6 @@ jobs:
     - name: Download Image Builder
       run: |
         wget -q $PREFIX_URL/$TARGET/$SUBTARGET/openwrt-imagebuilder-$TARGET-$SUBTARGET.Linux-x86_64.tar.xz
-
-    - name: Download Image Builder
-      run: |
-        wget -q $PREFIX_URL/$TARGET/$SUBTARGET/openwrt-imagebuilder-$TARGET-$SUBTARGET.Linux-x86_64.tar.xz
         wget -q https://raw.githubusercontent.com/coolsnowwolf/lede/master/package/lean/autocore/files/arm/index.htm -O ./data/etc/index.htm
 
     - name: Load Custom Configuration 
@@ -63,7 +59,15 @@ jobs:
         tar -xJf *.tar.xz
         cd openwrt-imagebuilder-$TARGET-$SUBTARGET.Linux-x86_64
         sed -i 's/kmod-/-kmod-/g' include/target.mk
+        sed -i 's/luci-app-sfe//g' include/target.mk
         sed -i 's/kmod-/-kmod-/g' target/linux/$TARGET/Makefile
+
+    - name: Build RootFS
+      run: |
+        export packages=$(cat data/config/arm-packages.config)
+        cd openwrt-imagebuilder-$TARGET-$SUBTARGET.Linux-x86_64
+        make image PACKAGES="$packages"
+        cp bin/targets/$TARGET/$SUBTARGET/*rootfs.tar.gz ..
 
     - name: Build & Push Multiarch Image
       uses: docker/build-push-action@v2
