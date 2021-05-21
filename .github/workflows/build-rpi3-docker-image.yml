@@ -49,7 +49,7 @@ jobs:
     - name: Download Image Builder
       run: |
         wget -q $PREFIX_URL/$TARGET/$SUBTARGET/openwrt-imagebuilder-$TARGET-$SUBTARGET.Linux-x86_64.tar.xz
-        wget -q https://raw.githubusercontent.com/coolsnowwolf/lede/master/package/lean/autocore/files/arm/index.htm -O ./data/etc/index.htm
+        wget -q https://raw.githubusercontent.com/coolsnowwolf/lede/master/package/lean/autocore/files/arm/index.htm -O ./files/etc/index.htm
 
     - name: Load Custom Configuration 
       run: |
