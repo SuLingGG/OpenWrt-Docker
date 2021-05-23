@@ -70,6 +70,7 @@ jobs:
     - name: Build RootFS
       run: |
         sed -i 's/autocore/autocore-arm/g' config/packages.config
+        sed -i 's/luci-i18n-adbyby-plus-zh-cn//g' config/packages.config
         export packages=$(cat config/packages.config)
         cd openwrt-imagebuilder-$TARGET-$SUBTARGET.Linux-x86_64
         make image PACKAGES="$packages" FILES=files/
