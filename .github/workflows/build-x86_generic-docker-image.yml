@@ -65,12 +65,16 @@ jobs:
         sed -i 's/kmod-/-kmod-/g' include/target.mk
         sed -i 's/luci-app-sfe//g' include/target.mk
         sed -i 's/kmod-/-kmod-/g' target/linux/$TARGET/Makefile
+        cp -rf ../files .
 
     - name: Build RootFS
       run: |
-        export packages=$(cat ./config/x86_64-packages.config)
+        sed -i 's/autocore/autocore-x86/g' config/packages.config
+        sed -i 's/luci-app-uugamebooster //g' config/packages.config
+        sed -i 's/luci-i18n-uugamebooster-zh-cn //g' config/packages.config
+        export packages=$(cat ./config/packages.config)
         cd openwrt-imagebuilder-$TARGET-$SUBTARGET.Linux-x86_64
-        make image PACKAGES="$packages"
+        make image PACKAGES="$packages" FILES=files/
         cp bin/targets/$TARGET/$SUBTARGET/*rootfs.tar.gz ..
         cd ..
         rm -rf openwrt-imagebuilder-$TARGET-$SUBTARGET.Linux-x86_64
