@@ -63,11 +63,14 @@ jobs:
         rm *.tar.xz
         cd openwrt-imagebuilder-$TARGET-$SUBTARGET.Linux-x86_64
         sed -i 's/kmod-/-kmod-/g' include/target.mk
+        sed -i 's/luci-app-unblockmusic//g' include/target.mk
+        sed -i 's/luci-app-nlbwmon//g' include/target.mk
         sed -i 's/luci-app-sfe//g' include/target.mk
         sed -i 's/-luci-app-sfe//g' include/target.mk
         sed -i 's/kmod-/-kmod-/g' target/linux/$TARGET/Makefile
         sed -i 's/luci-app-flowoffload//g' include/target.mk
         sed -i 's/luci-app-qbittorrent//g' target/linux/x86/Makefile
+        sed -i 's/luci-app-unblockmusic//g' target/linux/x86/Makefile
         sed -i 's/luci-app-uugamebooster//g' target/linux/$TARGET/Makefile
         cp -rf ../files .
 
