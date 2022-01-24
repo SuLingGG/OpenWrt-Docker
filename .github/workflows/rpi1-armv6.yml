@@ -1,0 +1,95 @@
+name: rpi1/armv6
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 0 * * *
+
+env:
+  PREFIX_URL: https://storage.openwrt.cc/snapshots/targets
+  DEVICE_TARGET: bcm27xx
+  DEVICE_SUBTARGET: bcm2708
+  DEVICE_PLATFORM: arm_arm1176jzf-s_vfp
+  DOCKER_IMAGE_ARCH: linux/arm/v6
+  DOCKER_DEVICE_TAG: rpi1
+  DOCKER_ARCH_TAG: armv6
+  CLASH_BINARY_PLATFORM: armv6
+
+jobs:
+  Publish:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Initialization Environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-1804)
+
+    - name: Set Up QEMU
+      uses: docker/setup-qemu-action@v1
+
+    - name: Set Up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login To DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PWD }}
+
+    - name: Login To Alibaba Cloud Container Registry
+      run: |
+        docker login -u ${{ secrets.ALIYUN_USERNAME }} -p ${{ secrets.ALIYUN_PWD }} registry.cn-shanghai.aliyuncs.com
+
+    - name: Download Image Builder
+      run: |
+        wget -q $PREFIX_URL/$DEVICE_TARGET/$DEVICE_SUBTARGET/immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64.tar.xz
+        tar -xJf *.tar.xz
+        rm *.tar.xz
+
+    - name: Load Custom Configuration 
+      run: |
+        cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+        cp -f $GITHUB_WORKSPACE/config/repositories.conf .
+        sed -i "s/DEVICE_SUBTARGET/$DEVICE_SUBTARGET/g" repositories.conf
+        sed -i "s/DEVICE_TARGET/$DEVICE_TARGET/g" repositories.conf
+        sed -i "s/DEVICE_PLATFORM/$DEVICE_PLATFORM/g" repositories.conf
+        cp -rf $GITHUB_WORKSPACE/files .
+        chmod +x files/etc/rc.local
+        export KERNEL_VERSION="$(ls packages | grep kernel | awk -F '_' '{print $2}')"
+        sed -i "s/DEVICE_SUBTARGET/$DEVICE_SUBTARGET/g" files/etc/opkg/distfeeds.conf
+        sed -i "s/DEVICE_TARGET/$DEVICE_TARGET/g" files/etc/opkg/distfeeds.conf
+        sed -i "s/KERNEL_VERSION/$KERNEL_VERSION/g" files/etc/opkg/distfeeds.conf
+        sed -i "s/DEVICE_PLATFORM/$DEVICE_PLATFORM/g" files/etc/opkg/distfeeds.conf
+        chmod +x $GITHUB_WORKSPACE/scripts/*
+        $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $CLASH_BINARY_PLATFORM
+        $GITHUB_WORKSPACE/scripts/preset-terminal-tools.sh
+
+    - name: Build RootFS
+      run: |
+        sed -i 's/autocore/autocore-arm/g' config/packages.config
+        cd openwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+        export packages=$(cat packages.config | tr -s "\n" " ")
+        make image PACKAGES="$packages" FILES=files/
+        cp bin/targets/$DEVICE_TARGET/$DEVICE_SUBTARGET/*rootfs.tar.gz $GITHUB_WORKSPACE
+        cd $GITHUB_WORKSPACE
+        rm -rf openwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+
+    - name: Build & Push Multiarch Image
+      uses: docker/build-push-action@v2
+      with:
+        platforms: ${{ env.DOCKER_IMAGE_ARCH }}
+        file: Dockerfile
+        context: .
+        push: true
+        tags: |
+          ${{ secrets.DOCKERHUB_USERNAME }}/openwrt:${{ env.DOCKER_DEVICE_TAG }}
+          ${{ secrets.DOCKERHUB_USERNAME }}/openwrt:${{ env.DOCKER_ARCH_TAG }}
+          registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt:${{ env.DOCKER_DEVICE_TAG }}
+          registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt:${{ env.DOCKER_ARCH_TAG }}
