@@ -74,12 +74,12 @@ jobs:
     - name: Build RootFS
       run: |
         sed -i 's/autocore/autocore-arm/g' config/packages.config
-        cd openwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+        cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
         export packages=$(cat packages.config | tr -s "\n" " ")
         make image PACKAGES="$packages" FILES=files/
         cp bin/targets/$DEVICE_TARGET/$DEVICE_SUBTARGET/*rootfs.tar.gz $GITHUB_WORKSPACE
         cd $GITHUB_WORKSPACE
-        rm -rf openwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+        rm -rf immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
 
     - name: Build & Push Multiarch Image
       uses: docker/build-push-action@v2
