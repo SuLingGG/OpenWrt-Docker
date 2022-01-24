@@ -13,7 +13,7 @@ env:
   DEVICE_PLATFORM: arm_cortex-a7_neon-vfpv4
   DOCKER_IMAGE_ARCH: linux/arm/v7
   DOCKER_DEVICE_TAG: rpi2
-  CLASH_BINARY_PLATFORM: armv7
+  ARCH_TAG: armv7
 
 jobs:
   Publish:
@@ -87,8 +87,10 @@ jobs:
         push: true
         tags: |
           ${{ secrets.DOCKERHUB_USERNAME }}/openwrt-mini:${{ env.DOCKER_DEVICE_TAG }}
+          ${{ secrets.DOCKERHUB_USERNAME }}/openwrt-mini:${{ env.ARCH_TAG }}
           ${{ secrets.DOCKERHUB_USERNAME }}/openwrt-mini:latest
           registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt-mini:${{ env.DOCKER_DEVICE_TAG }}
+          registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt-mini:${{ env.ARCH_TAG }}
           registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt-mini:latest
 
     - name: Set Normal Image Builder
@@ -109,10 +111,9 @@ jobs:
 
     - name: Build Normal RootFS
       run: |
-        sed -i "s/autocore/autocore-arm/g" config/packages.config
         cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
         chmod +x $GITHUB_WORKSPACE/scripts/*
-        $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $CLASH_BINARY_PLATFORM
+        $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $ARCH_TAG
         $GITHUB_WORKSPACE/scripts/preset-terminal-tools.sh
         sed -i "/CONFIG_TARGET_ROOTFS_SQUASHFS/s/.*/# CONFIG_TARGET_ROOTFS_SQUASHFS is not set/;
           /CONFIG_TARGET_ROOTFS_EXT4FS/s/.*/# CONFIG_TARGET_ROOTFS_EXT4FS is not set/" .config
@@ -131,6 +132,8 @@ jobs:
         push: true
         tags: |
           ${{ secrets.DOCKERHUB_USERNAME }}/openwrt:${{ env.DOCKER_DEVICE_TAG }}
+          ${{ secrets.DOCKERHUB_USERNAME }}/openwrt:${{ env.ARCH_TAG }}
           ${{ secrets.DOCKERHUB_USERNAME }}/openwrt:latest
           registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt:${{ env.DOCKER_DEVICE_TAG }}
+          registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt:${{ env.ARCH_TAG }}
           registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt:latest
