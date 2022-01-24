@@ -75,7 +75,7 @@ jobs:
       run: |
         sed -i 's/autocore/autocore-arm/g' config/packages.config
         cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
-        export packages=$(cat packages.config | tr -s "\n" " ")
+        export packages=$(cat $GITHUB_WORKSPACE/config/packages.config | tr -s "\n" " ")
         make image PACKAGES="$packages" FILES=files/
         cp bin/targets/$DEVICE_TARGET/$DEVICE_SUBTARGET/*rootfs.tar.gz $GITHUB_WORKSPACE
         cd $GITHUB_WORKSPACE
