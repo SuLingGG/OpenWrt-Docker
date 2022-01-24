@@ -1,4 +1,4 @@
-name: rpi1/armv6
+name: rpi3/armv8
 
 on:
   repository_dispatch:
@@ -9,12 +9,12 @@ on:
 env:
   PREFIX_URL: https://storage.openwrt.cc/snapshots/targets
   DEVICE_TARGET: bcm27xx
-  DEVICE_SUBTARGET: bcm2708
-  DEVICE_PLATFORM: arm_arm1176jzf-s_vfp
-  DOCKER_IMAGE_ARCH: linux/arm/v6
-  DOCKER_DEVICE_TAG: rpi1
-  DOCKER_ARCH_TAG: armv6
-  CLASH_BINARY_PLATFORM: armv6
+  DEVICE_SUBTARGET: bcm2710
+  DEVICE_PLATFORM: aarch64_cortex-a53
+  DOCKER_IMAGE_ARCH: linux/arm/v8
+  DOCKER_DEVICE_TAG: rpi3
+  DOCKER_ARCH_TAG: armv8
+  CLASH_BINARY_PLATFORM: armv8
 
 jobs:
   Publish:
@@ -89,9 +89,7 @@ jobs:
         push: true
         tags: |
           ${{ secrets.DOCKERHUB_USERNAME }}/openwrt-mini:${{ env.DOCKER_DEVICE_TAG }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/openwrt-mini:${{ env.DOCKER_ARCH_TAG }}
           registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt-mini:${{ env.DOCKER_DEVICE_TAG }}
-          registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt-mini:${{ env.DOCKER_ARCH_TAG }}
 
     - name: Build Normal RootFS
       run: |
@@ -117,6 +115,4 @@ jobs:
         push: true
         tags: |
           ${{ secrets.DOCKERHUB_USERNAME }}/openwrt:${{ env.DOCKER_DEVICE_TAG }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/openwrt:${{ env.DOCKER_ARCH_TAG }}
           registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt:${{ env.DOCKER_DEVICE_TAG }}
-          registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt:${{ env.DOCKER_ARCH_TAG }}

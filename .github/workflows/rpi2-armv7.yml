@@ -1,4 +1,4 @@
-name: rpi1/armv6
+name: rpi2/armv7
 
 on:
   repository_dispatch:
@@ -9,12 +9,12 @@ on:
 env:
   PREFIX_URL: https://storage.openwrt.cc/snapshots/targets
   DEVICE_TARGET: bcm27xx
-  DEVICE_SUBTARGET: bcm2708
-  DEVICE_PLATFORM: arm_arm1176jzf-s_vfp
-  DOCKER_IMAGE_ARCH: linux/arm/v6
-  DOCKER_DEVICE_TAG: rpi1
-  DOCKER_ARCH_TAG: armv6
-  CLASH_BINARY_PLATFORM: armv6
+  DEVICE_SUBTARGET: bcm2709
+  DEVICE_PLATFORM: arm_cortex-a7_neon-vfpv4
+  DOCKER_IMAGE_ARCH: linux/arm/v7
+  DOCKER_DEVICE_TAG: rpi2
+  DOCKER_ARCH_TAG: armv7
+  CLASH_BINARY_PLATFORM: armv7
 
 jobs:
   Publish:
