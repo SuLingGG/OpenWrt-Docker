@@ -30,7 +30,7 @@ jobs:
       run: |
         sudo -E apt-get -qq update
         sudo -E apt-get -qq install build-essential libncurses5-dev libncursesw5-dev \
-          zlib1g-dev gawk git gettext libssl-dev xsltproc rsync wget unzip python
+          zlib1g-dev gawk git gettext libssl-dev xsltproc rsync wget unzip python qemu-img
 
     - name: Set Up QEMU
       uses: docker/setup-qemu-action@v1
