@@ -51,7 +51,7 @@ jobs:
       run: |
         wget -q $PREFIX_URL/$DEVICE_TARGET/$DEVICE_SUBTARGET/immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64.tar.xz
 
-    - name: Set Image Builder
+    - name: Set Mini Image Builder
       run: |
         tar -xJf *.tar.xz
         cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
@@ -91,9 +91,24 @@ jobs:
           registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt-mini:${{ env.DOCKER_DEVICE_TAG }}
           registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt-mini:latest
 
-    - name: Build Normal RootFS
+    - name: Set Normal Image Builder
       run: |
         tar -xJf *.tar.xz
+        cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+        cp -f $GITHUB_WORKSPACE/config/repositories.conf .
+        sed -i "s/DEVICE_SUBTARGET/$DEVICE_SUBTARGET/g; \
+          s/DEVICE_TARGET/$DEVICE_TARGET/g; \
+          s/DEVICE_PLATFORM/$DEVICE_PLATFORM/g" repositories.conf
+        cp -rf $GITHUB_WORKSPACE/files .
+        chmod +x files/etc/rc.local
+        export KERNEL_VERSION="$(ls packages | grep kernel | awk -F '_' '{print $2}')"
+        sed -i "s/DEVICE_SUBTARGET/$DEVICE_SUBTARGET/g; \
+          s/DEVICE_TARGET/$DEVICE_TARGET/g; \
+          s/KERNEL_VERSION/$KERNEL_VERSION/g; \
+          s/DEVICE_PLATFORM/$DEVICE_PLATFORM/g" files/etc/opkg/distfeeds.conf
+
+    - name: Build Normal RootFS
+      run: |
         sed -i "s/autocore/autocore-arm/g" config/packages.config
         cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
         chmod +x $GITHUB_WORKSPACE/scripts/*
