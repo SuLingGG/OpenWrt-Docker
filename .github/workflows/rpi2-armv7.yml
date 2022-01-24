@@ -13,7 +13,6 @@ env:
   DEVICE_PLATFORM: arm_cortex-a7_neon-vfpv4
   DOCKER_IMAGE_ARCH: linux/arm/v7
   DOCKER_DEVICE_TAG: rpi2
-  DOCKER_ARCH_TAG: armv7
   CLASH_BINARY_PLATFORM: armv7
 
 jobs:
@@ -88,9 +87,9 @@ jobs:
         push: true
         tags: |
           ${{ secrets.DOCKERHUB_USERNAME }}/openwrt-mini:${{ env.DOCKER_DEVICE_TAG }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/openwrt-mini:${{ env.DOCKER_ARCH_TAG }}
+          ${{ secrets.DOCKERHUB_USERNAME }}/openwrt-mini:latest
           registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt-mini:${{ env.DOCKER_DEVICE_TAG }}
-          registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt-mini:${{ env.DOCKER_ARCH_TAG }}
+          registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt-mini:latest
 
     - name: Build Normal RootFS
       run: |
@@ -117,6 +116,6 @@ jobs:
         push: true
         tags: |
           ${{ secrets.DOCKERHUB_USERNAME }}/openwrt:${{ env.DOCKER_DEVICE_TAG }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/openwrt:${{ env.DOCKER_ARCH_TAG }}
+          ${{ secrets.DOCKERHUB_USERNAME }}/openwrt:latest
           registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt:${{ env.DOCKER_DEVICE_TAG }}
-          registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt:${{ env.DOCKER_ARCH_TAG }}
+          registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt:latest
