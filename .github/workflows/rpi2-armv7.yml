@@ -51,11 +51,10 @@ jobs:
     - name: Download Image Builder
       run: |
         wget -q $PREFIX_URL/$DEVICE_TARGET/$DEVICE_SUBTARGET/immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64.tar.xz
-        tar -xJf *.tar.xz
-        rm *.tar.xz
 
     - name: Set Image Builder
       run: |
+        tar -xJf *.tar.xz
         cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
         cp -f $GITHUB_WORKSPACE/config/repositories.conf .
         sed -i "s/DEVICE_SUBTARGET/$DEVICE_SUBTARGET/g; \
@@ -95,6 +94,7 @@ jobs:
 
     - name: Build Normal RootFS
       run: |
+        tar -xJf *.tar.xz
         sed -i "s/autocore/autocore-arm/g" config/packages.config
         cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
         chmod +x $GITHUB_WORKSPACE/scripts/*
@@ -106,7 +106,7 @@ jobs:
         make image PACKAGES="$CONFIG_PACKAGES" FILES="files"
         cp bin/targets/$DEVICE_TARGET/$DEVICE_SUBTARGET/*rootfs.tar.gz $GITHUB_WORKSPACE
         cd $GITHUB_WORKSPACE
-        rm -rf immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+        rm -rf immortalwrt-imagebuilder*
 
     - name: Build & Push Normal Image
       uses: docker/build-push-action@v2
