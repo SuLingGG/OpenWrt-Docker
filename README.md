@@ -27,7 +27,6 @@ OpenWrt 标准镜像为集成常用软件包的 Docker 镜像，镜像自带软�
 |    树莓派 2B    |  sulinggg/openwrt:rpi2  |  registry.cn-shanghai.aliyuncs.com/suling/openwrt:rpi2  |
 | 树莓派 3B / 3B+ |  sulinggg/openwrt:rpi3  |  registry.cn-shanghai.aliyuncs.com/suling/openwrt:rpi3  |
 |    树莓派 4B    |  sulinggg/openwrt:rpi4  |  registry.cn-shanghai.aliyuncs.com/suling/openwrt:rpi4  |
-|      armv6      | sulinggg/openwrt:armv6  | registry.cn-shanghai.aliyuncs.com/suling/openwrt:armv6  |
 |      armv7      | sulinggg/openwrt:armv7  | registry.cn-shanghai.aliyuncs.com/suling/openwrt:armv7  |
 |  arm8/aarch64   | sulinggg/openwrt:armv8  | registry.cn-shanghai.aliyuncs.com/suling/openwrt:armv8  |
 |  x86_64/amd64   | sulinggg/openwrt:x86_64 | registry.cn-shanghai.aliyuncs.com/suling/openwrt:x86_64 |
@@ -42,7 +41,6 @@ OpenWrt-Mni 镜像为几乎未添加额外软件包的 Docker 镜像，你可以
 |    树莓派 2B    |  sulinggg/openwrt-mini:rpi2  |  registry.cn-shanghai.aliyuncs.com/suling/openwrt-mini:rpi2  |
 | 树莓派 3B / 3B+ |  sulinggg/openwrt-mini:rpi3  |  registry.cn-shanghai.aliyuncs.com/suling/openwrt-mini:rpi3  |
 |    树莓派 4B    |  sulinggg/openwrt-mini:rpi4  |  registry.cn-shanghai.aliyuncs.com/suling/openwrt-mini:rpi4  |
-|      armv6      | sulinggg/openwrt-mini:armv6  | registry.cn-shanghai.aliyuncs.com/suling/openwrt-mini:armv6  |
 |      armv7      | sulinggg/openwrt-mini:armv7  | registry.cn-shanghai.aliyuncs.com/suling/openwrt-mini:armv7  |
 |  arm8/aarch64   | sulinggg/openwrt-mini:armv8  | registry.cn-shanghai.aliyuncs.com/suling/openwrt-mini:armv8  |
 |  x86_64/amd64   | sulinggg/openwrt-mini:x86_64 | registry.cn-shanghai.aliyuncs.com/suling/openwrt-mini:x86_64 |
