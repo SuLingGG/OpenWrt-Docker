@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: Build Docker Images
+name: Multi-Arch Images
 
 env:
   PREFIX_URL: https://storage.openwrt.cc/snapshots/targets
@@ -99,7 +99,7 @@ jobs:
           export DEVICE_SUBTARGET=$(echo ${{ matrix.TARGETS }} | awk -F '/' '{print $3}')
           echo "DEVICE_SUBTARGET=$DEVICE_SUBTARGET" >> $GITHUB_ENV
           export DOCKER_IMAGE_ARCH=$(echo ${{ matrix.TARGETS }} | awk -F '/' '{print $4}' | sed 's/-/\//g')
-          echo "DOCKER_IMAGE_ARCH=$DEVICE_SUBTARGET" >> $GITHUB_ENV
+          echo "DOCKER_IMAGE_ARCH=$DOCKER_IMAGE_ARCH" >> $GITHUB_ENV
 
       - name: Download Image Builder
         run: |
