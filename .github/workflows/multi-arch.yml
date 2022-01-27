@@ -1,0 +1,184 @@
+#=================================================
+# https://github.com/P3TERX/Actions-OpenWrt
+# Description: Build OpenWrt using GitHub Actions
+# Lisence: MIT
+# Author: P3TERX
+# Blog: https://p3terx.com
+#=================================================
+
+name: Build Docker Images
+
+env:
+  PREFIX_URL: https://storage.openwrt.cc/snapshots/targets
+
+on:
+  workflow_dispatch:
+    inputs:
+      INPUT_TARGET:
+        description: "Target to build (platform/target/subtarget)"
+        required: false
+        default: "all"
+  schedule:
+    - cron: 0 0 * * *
+
+jobs:
+  Config:
+    name: Generate Config
+    runs-on: ubuntu-latest
+    outputs:
+      TARGETS: ${{ steps.find-targets.outputs.TARGETS }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Find Targets
+        id: find-targets
+        env:
+          INPUT_TARGET: ${{ github.event.inputs.INPUT_TARGET }}
+        run: |
+          if [ "$INPUT_TARGET" = "all" ] || [ "$INPUT_TARGET" = "" ]; then
+            export TARGETS="$(cat config/platform.config)"
+          else
+            export TARGETS="$INPUT_TARGET"
+          fi
+          JSON='{"config": ["default"], "targets":['
+          FIRST=1
+          for TARGET in $TARGETS; do
+          [[ $FIRST -ne 1 ]] && JSON="$JSON"','
+          JSON="$JSON"'"'"${TARGET}"'"'
+          FIRST=0
+          done
+          JSON="$JSON"']}'
+          echo $JSON
+          echo "::set-output name=TARGETS::$JSON"
+
+  Docker-Images:
+    name: ${{ matrix.TARGETS }}
+    needs: [Config]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.Config.outputs.TARGETS)}}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Initialization Environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo -E apt-get -qq update
+          sudo -E apt-get -qq install build-essential libncurses5-dev libncursesw5-dev \
+            zlib1g-dev gawk git gettext libssl-dev xsltproc rsync wget unzip python qemu-utils
+
+      - name: Set Up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login To DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PWD }}
+
+      - name: Login To Alibaba Cloud Container Registry
+        run: |
+          docker login -u ${{ secrets.ALIYUN_USERNAME }} -p ${{ secrets.ALIYUN_PWD }} registry.cn-shanghai.aliyuncs.com
+
+      - name: Generate Variables
+        id: env
+        run: |
+          export DEVICE_PLATFORM=$(echo ${{ matrix.TARGETS }} | awk -F '/' '{print $1}')
+          echo "DEVICE_PLATFORM=$DEVICE_PLATFORM" >> $GITHUB_ENV
+          export DEVICE_TARGET=$(echo ${{ matrix.TARGETS }} | awk -F '/' '{print $2}')
+          echo "DEVICE_TARGET=$DEVICE_TARGET" >> $GITHUB_ENV
+          export DEVICE_SUBTARGET=$(echo ${{ matrix.TARGETS }} | awk -F '/' '{print $3}')
+          echo "DEVICE_SUBTARGET=$DEVICE_SUBTARGET" >> $GITHUB_ENV
+          export DOCKER_IMAGE_ARCH=$(echo ${{ matrix.TARGETS }} | awk -F '/' '{print $4}' | sed 's/-/\//g')
+          echo "DOCKER_IMAGE_ARCH=$DEVICE_SUBTARGET" >> $GITHUB_ENV
+
+      - name: Download Image Builder
+        run: |
+          wget -q $PREFIX_URL/$DEVICE_TARGET/$DEVICE_SUBTARGET/immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64.tar.xz
+
+      - name: Set Mini Image Builder
+        run: |
+          tar -xJf *.tar.xz
+          cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+          cp -f $GITHUB_WORKSPACE/config/repositories.conf .
+          sed -i "s/DEVICE_SUBTARGET/$DEVICE_SUBTARGET/g; \
+            s/DEVICE_TARGET/$DEVICE_TARGET/g; \
+            s/DEVICE_PLATFORM/$DEVICE_PLATFORM/g" repositories.conf
+          cp -rf $GITHUB_WORKSPACE/files .
+          chmod +x files/etc/rc.local
+          export KERNEL_VERSION="$(ls packages | grep kernel | awk -F '_' '{print $2}')"
+          sed -i "s/DEVICE_SUBTARGET/$DEVICE_SUBTARGET/g; \
+            s/DEVICE_TARGET/$DEVICE_TARGET/g; \
+            s/KERNEL_VERSION/$KERNEL_VERSION/g; \
+            s/DEVICE_PLATFORM/$DEVICE_PLATFORM/g" files/etc/opkg/distfeeds.conf
+
+      - name: Build Mini RootFS
+        run: |
+          cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+          sed -i "/CONFIG_TARGET_ROOTFS_SQUASHFS/s/.*/# CONFIG_TARGET_ROOTFS_SQUASHFS is not set/;
+            /CONFIG_TARGET_ROOTFS_EXT4FS/s/.*/# CONFIG_TARGET_ROOTFS_EXT4FS is not set/" .config
+          export CONFIG_MINI_PACKAGES=$(cat $GITHUB_WORKSPACE/config/mini-packages.config | tr -s "\n" " ")
+          make image PACKAGES="$CONFIG_MINI_PACKAGES" FILES="files"
+          cp bin/targets/$DEVICE_TARGET/$DEVICE_SUBTARGET/*rootfs.tar.gz $GITHUB_WORKSPACE
+          cd $GITHUB_WORKSPACE
+          rm -rf immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+
+      - name: Build & Push Mini Image
+        uses: docker/build-push-action@v2
+        with:
+          platforms: ${{ env.DOCKER_IMAGE_ARCH }}
+          file: Dockerfile
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/openwrt-mini:${{ env.DEVICE_PLATFORM }}
+            registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt-mini:${{ env.DEVICE_PLATFORM }}
+
+      - name: Set Normal Image Builder
+        run: |
+          tar -xJf *.tar.xz
+          cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+          cp -f $GITHUB_WORKSPACE/config/repositories.conf .
+          sed -i "s/DEVICE_SUBTARGET/$DEVICE_SUBTARGET/g; \
+            s/DEVICE_TARGET/$DEVICE_TARGET/g; \
+            s/DEVICE_PLATFORM/$DEVICE_PLATFORM/g" repositories.conf
+          cp -rf $GITHUB_WORKSPACE/files .
+          chmod +x files/etc/rc.local
+          export KERNEL_VERSION="$(ls packages | grep kernel | awk -F '_' '{print $2}')"
+          sed -i "s/DEVICE_SUBTARGET/$DEVICE_SUBTARGET/g; \
+            s/DEVICE_TARGET/$DEVICE_TARGET/g; \
+            s/KERNEL_VERSION/$KERNEL_VERSION/g; \
+            s/DEVICE_PLATFORM/$DEVICE_PLATFORM/g" files/etc/opkg/distfeeds.conf
+
+      - name: Build Normal RootFS
+        run: |
+          cd immortalwrt-imagebuilder-$DEVICE_TARGET-$DEVICE_SUBTARGET.Linux-x86_64
+          chmod +x $GITHUB_WORKSPACE/scripts/*
+          $GITHUB_WORKSPACE/scripts/preset-terminal-tools.sh
+          sed -i "/CONFIG_TARGET_ROOTFS_SQUASHFS/s/.*/# CONFIG_TARGET_ROOTFS_SQUASHFS is not set/;
+            /CONFIG_TARGET_ROOTFS_EXT4FS/s/.*/# CONFIG_TARGET_ROOTFS_EXT4FS is not set/" .config
+          export CONFIG_NORMAL_PACKAGES=$(cat $GITHUB_WORKSPACE/config/normal-packages.config | tr -s "\n" " ")
+          make image PACKAGES="$CONFIG_NORMAL_PACKAGES" FILES="files"
+          cp bin/targets/$DEVICE_TARGET/$DEVICE_SUBTARGET/*rootfs.tar.gz $GITHUB_WORKSPACE
+          cd $GITHUB_WORKSPACE
+          rm -rf immortalwrt-imagebuilder*
+
+      - name: Build & Push Normal Image
+        uses: docker/build-push-action@v2
+        with:
+          platforms: ${{ env.DOCKER_IMAGE_ARCH }}
+          file: Dockerfile
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/openwrt:${{ env.DEVICE_PLATFORM }}
+            registry.cn-shanghai.aliyuncs.com/${{ secrets.ALIYUN_NAMESPACES }}/openwrt:${{ env.DEVICE_PLATFORM }}
